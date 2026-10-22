@@ -1,0 +1,136 @@
+<header class="top">
+  <div class="brand">
+    <h1 class="logo" style="margin:0">Fluvia</h1>
+    <small>Les rivières du Grand Est<br>Cartes à collectionner · 2000–2026</small>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <button data-view="boosters" aria-current="page">Boosters</button>
+    <button data-view="album">Album <small id="albumCount">0 / 128</small></button>
+    <button data-view="duel">Duel</button>
+    <button data-view="rules">Règles</button>
+  </nav>
+</header>
+
+<main>
+  <section class="view" id="v-boosters">
+    <h2 class="vt">Choisissez un booster</h2>
+    <p class="lede">Chaque booster contient <b>cinq cartes</b> tirées des rivières d'un bassin du Grand Est. Plus une rivière est grande, plus sa carte est rare. Les <b>ultra-rares</b>, les géants de la région, sortent environ une fois tous les huit boosters. Et parfois, une carte <b>spéciale</b> surgit : sécheresse, déluge, grand froid…</p>
+    <div class="stats" id="stats"></div>
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <section class="view" id="v-album" hidden>
+    <div class="album-head">
+      <div>
+        <h2 class="vt">Votre collection</h2>
+        <p class="lede" style="margin:0 0 10px">Cliquez sur une carte pour la regarder de près, puis retournez-la pour voir où coule la rivière.</p>
+        <div class="rarities" id="rarities"></div>
+      </div>
+      <div class="progress"><span id="progTxt"></span><div class="bar"><i id="progBar"></i></div>
+        <div class="filters"><button class="chip" data-f="all" aria-pressed="true">Toutes</button><button class="chip" data-f="own" aria-pressed="false">Obtenues</button></div>
+      </div>
+    </div>
+    <div id="albumBody"></div>
+  </section>
+
+  <section class="view" id="v-duel" hidden>
+    <h2 class="vt">Duel</h2>
+    <p class="lede">Choisissez une carte de votre album. Une rivière adverse est tirée au hasard dans toute la collection. Trois manches : à chaque manche, un trait de caractère est tiré au sort, la rivière la plus forte l'emporte.</p>
+    <div class="arena">
+      <div class="side" id="sideA"><div class="who">Votre rivière</div><div id="slotA"></div></div>
+      <div class="mid">
+        <div class="round" id="roundTxt">Prêt ?</div>
+        <div class="vs">contre</div>
+        <div class="gname" id="gName"></div>
+        <div class="pips" id="pips"><i></i><i></i><i></i></div>
+        <button class="btn solid" id="fight" disabled>Lancer le duel</button>
+      </div>
+      <div class="side" id="sideB"><div class="who">Rivière adverse</div><div id="slotB"></div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </section>
+
+  <section class="view" id="v-rules" hidden>
+    <h2 class="vt">Règles et lecture des cartes</h2>
+    <p class="lede">Un jeu tiré des données du concours DataGrandEst 2026 : les débits de 266 stations de mesure et la météo à leur pied, chaque semaine de janvier 2000 à septembre 2026. Les chiffres restent en coulisse ; les cartes n'en gardent que l'essentiel.</p>
+    <div class="rules">
+      <section>
+        <h3>La rareté</h3>
+        <ul class="rar-list">
+          <li><b>●</b> Commune · 72 cartes : ruisseaux et petites rivières</li>
+          <li><b>◆</b> Peu commune · 36 cartes : rivières moyennes</li>
+          <li><b style="color:#ffcf4a">★</b> Rare · 7 cartes, holographiques : grandes rivières</li>
+          <li><b style="color:#ffcf4a">✦</b> Ultra-rare · 7 cartes pleine illustration : Rhin, Meuse, Aisne, Moselle, Ill, Marne, Seine</li>
+          <li><b style="color:#ff3d9a">✺</b> Spéciale · 6 phénomènes</li>
+        </ul>
+        <p style="margin-top:8px">La rareté suit le débit habituel de la plus grande station de la rivière. En moyenne : une ultra-rare tous les huit boosters, une rare dans deux boosters sur cinq, une spéciale dans un booster sur six. Le bassin de la Saône n'ayant pas de grande rivière, ses boosters puisent leurs rares et ultra-rares dans les autres bassins.</p>
+        <p style="margin-top:8px"><b>Coup de pouce :</b> plus votre album se remplit, plus les cartes qu'il vous manque ont de chances de sortir. Au début, toutes les cartes se valent ; à la fin, une carte manquante sort jusqu'à dix fois plus souvent qu'un doublon.</p>
+      </section>
+      <section>
+        <h3>Les trois attributs</h3>
+        <ul>
+          <li><b>Puissance</b> : le débit habituel de la rivière, comparé aux autres.</li>
+          <li><b>Résistance à la sécheresse</b> : ce qu'il lui reste en plein été par rapport à son débit ordinaire.</li>
+          <li><b>Tempérament en crue</b> : à quel point elle peut gonfler lors de ses plus hautes eaux.</li>
+        </ul>
+        <p style="margin-top:8px">Chaque attribut se lit en gouttes, de une à cinq : il situe la rivière parmi les 122 de la collection. Une rivière régulée par un lac ou un barrage peut paraître très résistante.</p>
+      </section>
+      <section>
+        <h3>Les cartes spéciales</h3>
+        <p>Les phénomènes qui ont marqué les 26 ans. Leur verso montre, sur une frise de 2000 à 2026, chaque fois qu'ils se sont produits.</p>
+        <p style="margin-top:8px">Deux rivières (la Béchine, la source de Flanrupt) n'ont pas de tracé dans les contours fournis : leur carte porte un méandre symbolique, signalé comme tel.</p>
+      </section>
+      <section>
+        <h3>Votre collection</h3>
+        <p>L'album est conservé dans ce navigateur, sur cet appareil.</p>
+        <div class="row" style="margin-top:10px"><button class="btn ghost" id="reset">Vider l'album</button><span id="resetMsg" style="font-size:13px;color:var(--ink-3)"></span></div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<footer>Fluvia · un jeu de cartes tiré des données du concours DataGrandEst 2026 (Hub'Eau, Météo-France, BD Topage / Carthage) · tracés réels des cours d'eau.</footer>
+
+<div class="stage" id="stage" hidden>
+  <div class="motes" aria-hidden="true"></div>
+  <div class="dim" id="dim" aria-hidden="true"></div>
+  <div class="stage-top"><b id="stageTitle"></b><button class="btn ghost" id="stageClose">Fermer</button></div>
+  <div class="stage-mid" id="stageMid">
+    <div class="rays" id="rays"></div>
+    <div class="banner" id="banner"></div>
+    <div class="deck" id="deck"></div>
+    <div class="bigpack" id="bigpack">
+      <div class="halo" aria-hidden="true"></div>
+      <div class="body" id="packBody"></div>
+      <div class="flap" id="packFlap"></div>
+      <div class="leak" id="leak" aria-hidden="true"></div>
+      <div class="seam" id="seam" aria-hidden="true"><i></i></div>
+      <div class="beam" id="beam" aria-hidden="true"></div>
+      <div class="tearzone" id="tearZone" role="button" tabindex="0" aria-label="Ouvrir le booster (ou appuyer sur Entrée)"></div>
+      <div class="hand" id="hand" aria-hidden="true"><span></span></div>
+    </div>
+    <div class="summary" id="summary" hidden>
+      <div class="fan" id="fan"></div>
+      <div class="row" style="justify-content:center"><button class="btn solid big" id="again">Ouvrir un autre booster</button><button class="btn big" id="toAlbum">Voir la collection</button></div>
+    </div>
+  </div>
+  <div class="tray" id="tray" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+</div>
+
+<div class="viewer" id="viewer" hidden>
+  <div id="viewerCard"></div>
+  <div class="tip" id="viewerTip">Bougez la souris sur la carte · cliquez pour la retourner</div>
+  <div class="row"><button class="btn" id="vPrev" aria-label="Carte précédente">←</button><button class="btn" id="vFlip">Retourner</button><button class="btn" id="vClose">Fermer</button><button class="btn" id="vNext" aria-label="Carte suivante">→</button></div>
+</div>
+
+<div class="picker" id="picker" hidden>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between"><h2 class="vt" style="margin:0">Choisissez votre rivière</h2><button class="btn ghost" id="pickClose">Fermer</button></div>
+    <div class="grid" id="pickGrid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="flash" id="flash"></div>
+<canvas class="fx" id="fx" aria-hidden="true"></canvas>

@@ -12,3 +12,5 @@ Projet réalisé pour le concours de datavisualisation **DataGrandEst 2026** par
 - Rareté d'une carte : débit habituel de la plus grande station de la rivière.
 - Attributs (puissance, résistance à la sécheresse, tempérament en crue) : rang de la rivière parmi les 122.
 - Tout le jeu tient dans un seul fichier `index.html` ; la collection est conservée dans le navigateur.
+
+Les fichiers de travail (code, styles, données des cartes) sont dans [`sources/`](sources/) : voir son README pour modifier le jeu et le remettre en ligne.
