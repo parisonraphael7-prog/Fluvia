@@ -84,7 +84,7 @@ const bucket = (w) => BUCKETS.find(b => w * DPR <= b) || 900;
 const IMG = new Map(), QUEUE = [];
 let pumping = false;
 const idle = window.requestIdleCallback ? (f) => requestIdleCallback(f, { timeout: 250 }) : (f) => setTimeout(() => f({ timeRemaining: () => 10 }), 16);
-function runJob(j) { if (j.ran) return; j.ran = true; const cv = j.draw(); cv.toBlob(b => j.res(URL.createObjectURL(b)), 'image/jpeg', .9); }
+function runJob(j) { if (j.ran) return; j.ran = true; const cv = j.draw(); cv.toBlob(b => j.res(URL.createObjectURL(b)), j.type || 'image/jpeg', .9); }
 function pump() {
   if (pumping) return; pumping = true;
   // au moins une image par passage : la file avance même si le navigateur n'est jamais « libre » (animations continues)
@@ -92,9 +92,9 @@ function pump() {
   idle(step);
 }
 // prio : 0 = arrière-plan, 1 = bientôt (tête de file), 2 = tout de suite
-function imgURL(key, draw, prio = 0) {
+function imgURL(key, draw, prio = 0, type) {
   let e = IMG.get(key);
-  if (!e) { let res; const p = new Promise(r => res = r); e = { p, job: { draw, res, ran: false } }; IMG.set(key, e); if (prio < 2) { prio ? QUEUE.unshift(e.job) : QUEUE.push(e.job); pump(); } }
+  if (!e) { let res; const p = new Promise(r => res = r); e = { p, job: { draw, res, ran: false, type } }; IMG.set(key, e); if (prio < 2) { prio ? QUEUE.unshift(e.job) : QUEUE.push(e.job); pump(); } }
   if (prio === 2 && !e.job.ran) { const i = QUEUE.indexOf(e.job); if (i >= 0) QUEUE.splice(i, 1); runJob(e.job); }
   else if (prio === 1 && !e.job.ran) { const i = QUEUE.indexOf(e.job); if (i > 0) { QUEUE.splice(i, 1); QUEUE.unshift(e.job); } }
   return e.p;
@@ -102,7 +102,12 @@ function imgURL(key, draw, prio = 0) {
 const frontURL = (c, px, prio = 0) => imgURL(`f${c.id}@${px}`, () => drawFront(c, px), prio);
 const versoURL = (c, px, prio = 0) => imgURL(`v${c.id}@${px}`, () => drawVerso(c, px), prio);
 const backURL = (prio = 0) => imgURL('back', drawBack, prio);
-const packURL = (b, prio = 0) => imgURL(`p${b}`, () => drawPack(b), prio);
+// boosters : toile dessinée une fois par bassin, puis recopiée (pas d'encodage d'image, trop lent avec la transparence)
+const PACKS = new Map();
+function packCanvas(b) {
+  if (!PACKS.has(b)) PACKS.set(b, drawPack(b));
+  const src = PACKS.get(b), cv = document.createElement('canvas'); cv.width = src.width; cv.height = src.height; cv.getContext('2d').drawImage(src, 0, 0); cv.className = 'pkcv'; return cv;
+}
 function setSrc(img, promise) { img.decoding = 'async'; promise.then(u => { img.src = u; }); }
 
 /* =====================================================================
@@ -372,27 +377,73 @@ async function flip(el, toBack) { if (toBack && el._verso) el._verso(); el.class
 /* =====================================================================
    BOOSTERS
    ===================================================================== */
+// booster en emballage métallisé : bords sertis dentelés, volume « coussin », plis près des soudures, grain du film
+const PK_W = 600, PK_H = 900, PK_S = 1.25;
+function packPath(g) {
+  const t = 9, n = 46; g.beginPath(); g.moveTo(0, t);
+  for (let i = 1; i <= n; i++) g.lineTo(i * PK_W / n, i % 2 ? 0 : t);
+  g.lineTo(PK_W, PK_H - t);
+  for (let i = n - 1; i >= 0; i--) g.lineTo(i * PK_W / n, (n - i) % 2 ? PK_H : PK_H - t);
+  g.closePath();
+}
 function drawPack(b) {
-  const W = 600, H = 900, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); const [lt, mid, dp] = PAL[b];
+  const W = PK_W, H = PK_H, cv = document.createElement('canvas'); cv.width = W * PK_S; cv.height = H * PK_S;
+  const g = cv.getContext('2d'); g.scale(PK_S, PK_S); const [lt, mid, dp] = PAL[b], r = rng('pack' + b);
+  const TOP = 120, BOT = H - 60;
+  g.save(); packPath(g); g.clip();
   const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, mid); gr.addColorStop(.6, dp); gr.addColorStop(1, '#0b0d24'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
   g.save(); g.translate(W / 2, 520); g.globalAlpha = .18; g.fillStyle = '#fff';
   for (let k = 0; k < 22; k++) { const a0 = k / 22 * Math.PI * 2; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 900, a0, a0 + .08); g.closePath(); g.fill(); } g.restore();
   const big = RIVERS.filter(c => c.b === b).sort((a, z) => z.rar - a.rar || (z.gauges.power ?? 0) - (a.gauges.power ?? 0))[0];
   if (big) { g.save(); g.beginPath(); g.arc(W / 2, 520, 230, 0, Math.PI * 2); g.clip(); riverArt(g, big, W / 2 - 300, 520 - 228, 600, 456, true); g.restore();
     g.strokeStyle = metal(g, 70, 290, 530, 750, true); g.lineWidth = 9; g.beginPath(); g.arc(W / 2, 520, 230, 0, Math.PI * 2); g.stroke(); }
-  for (const [y0, y1] of [[0, 120], [H - 60, H]]) { g.fillStyle = metal(g, 0, y0, W, y1, false); g.fillRect(0, y0, W, y1 - y0); g.fillStyle = 'rgba(0,0,0,.18)'; for (let x = 0; x < W; x += 12) g.fillRect(x, y0, 5, y1 - y0); }
-  g.setLineDash([10, 8]); g.strokeStyle = 'rgba(11,13,36,.75)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(10, 126); g.lineTo(W - 10, 126); g.stroke(); g.setLineDash([]);
-  g.fillStyle = 'rgba(11,13,36,.75)'; g.font = `800 20px ${FU}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('✂  DÉCHIRER ICI', W / 2, 98);
   const lg = g.createLinearGradient(80, 0, 520, 0); lg.addColorStop(0, '#ffffff'); lg.addColorStop(1, lt);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
   g.save(); g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowOffsetY = 5; g.fillStyle = lg; g.font = `italic 800 108px ${FD}`; g.fillText('FLUVIA', W / 2, 200); g.restore();
   g.fillStyle = '#fff'; g.font = `700 20px ${FU}`; g.fillText('GRAND EST · 2000 – 2026', W / 2, 256);
   g.save(); g.fillStyle = '#0b0d24'; g.beginPath(); g.moveTo(40, 772); g.lineTo(560, 772); g.lineTo(540, 828); g.lineTo(60, 828); g.closePath(); g.fill();
   g.fillStyle = '#fff'; fit(g, `BASSIN ${BAS[b].toUpperCase()}`, 440, 34, 800, FD, 'italic'); g.fillText(`BASSIN ${BAS[b].toUpperCase()}`, W / 2, 801); g.restore();
   g.save(); g.translate(500, 330); g.rotate(.2); g.fillStyle = '#ffcf4a'; g.beginPath(); for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2, rr = k % 2 ? 46 : 56; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill();
   g.fillStyle = '#2a1300'; g.font = `800 30px ${FD}`; g.fillText('5', 0, -10); g.font = `800 16px ${FU}`; g.fillText('CARTES', 0, 16); g.restore();
-  const sh = g.createLinearGradient(0, 0, W, H); sh.addColorStop(.3, 'rgba(255,255,255,0)'); sh.addColorStop(.45, 'rgba(255,255,255,.22)'); sh.addColorStop(.55, 'rgba(255,255,255,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, H);
+  // volume du film : bords qui fuient vers l'arrière, reflets de courbure
+  const side = g.createLinearGradient(0, 0, W, 0);
+  [[0, 'rgba(0,0,0,.55)'], [.05, 'rgba(0,0,0,.2)'], [.1, 'rgba(255,255,255,.12)'], [.16, 'rgba(255,255,255,0)'], [.84, 'rgba(255,255,255,0)'], [.9, 'rgba(255,255,255,.08)'], [.95, 'rgba(0,0,0,.22)'], [1, 'rgba(0,0,0,.6)']].forEach(([o, c]) => side.addColorStop(o, c));
+  g.fillStyle = side; g.fillRect(0, TOP, W, BOT - TOP);
+  const pinch = (y0, dir) => { const v = g.createLinearGradient(0, y0, 0, y0 + dir * 70); v.addColorStop(0, 'rgba(0,0,0,.5)'); v.addColorStop(.25, 'rgba(255,255,255,.1)'); v.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = v; g.fillRect(0, Math.min(y0, y0 + dir * 70), W, 70); };
+  pinch(TOP, 1); pinch(BOT, -1);
+  // plis du plastique, en éventail depuis les soudures
+  const folds = (y0, dir) => { g.save(); g.filter = 'blur(1.5px)'; for (let k = 0; k < 18; k++) { const x = r() * W, len = 18 + r() * 50, wd = 2 + r() * 5, sk = (r() - .5) * 30, lite = k % 2;
+    const fg = g.createLinearGradient(0, y0, 0, y0 + dir * len); fg.addColorStop(0, lite ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.26)'); fg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = fg;
+    g.beginPath(); g.moveTo(x - wd, y0); g.quadraticCurveTo(x + sk * .3, y0 + dir * len * .5, x + sk, y0 + dir * len); g.quadraticCurveTo(x + sk * .3 + wd * .4, y0 + dir * len * .5, x + wd, y0); g.closePath(); g.fill(); } g.restore(); };
+  folds(TOP, 1); folds(BOT, -1);
+  // soudures serties : métal strié, ombre et reflet de bord
+  for (const [y0, y1] of [[0, TOP], [BOT, H]]) {
+    g.fillStyle = metal(g, 0, y0, W, y1, false); g.fillRect(0, y0, W, y1 - y0);
+    for (let x = 0; x < W; x += 8) { const sg = g.createLinearGradient(x, 0, x + 8, 0); sg.addColorStop(0, 'rgba(255,255,255,.35)'); sg.addColorStop(.5, 'rgba(0,0,0,.05)'); sg.addColorStop(1, 'rgba(0,0,0,.28)'); g.fillStyle = sg; g.fillRect(x, y0, 8, y1 - y0); }
+    const e = g.createLinearGradient(0, y0, 0, y1); e.addColorStop(0, 'rgba(0,0,0,.28)'); e.addColorStop(.2, 'rgba(255,255,255,.12)'); e.addColorStop(.8, 'rgba(255,255,255,0)'); e.addColorStop(1, 'rgba(0,0,0,.35)'); g.fillStyle = e; g.fillRect(0, y0, W, y1 - y0);
+  }
+  g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(0, TOP - 2, W, 2); g.fillRect(0, BOT, W, 2);
+  g.setLineDash([10, 8]); g.strokeStyle = 'rgba(11,13,36,.75)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(10, 126); g.lineTo(W - 10, 126); g.stroke(); g.setLineDash([]);
+  g.fillStyle = 'rgba(11,13,36,.8)'; g.font = `800 20px ${FU}`; g.fillText('✂  DÉCHIRER ICI', W / 2, 92);
+  // grain métallisé du film
+  for (let k = 0; k < 5000; k++) { g.fillStyle = k % 2 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.08)'; g.fillRect(r() * W, r() * H, 1.4, 1.4); }
+  g.globalAlpha = .05; g.strokeStyle = '#fff'; g.lineWidth = 1; for (let k = -H; k < W; k += 7) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + H * .35, H); g.stroke(); } g.globalAlpha = 1;
+  const sh = g.createLinearGradient(0, 0, W, H); sh.addColorStop(.3, 'rgba(255,255,255,0)'); sh.addColorStop(.45, 'rgba(255,255,255,.18)'); sh.addColorStop(.55, 'rgba(255,255,255,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, H);
+  g.restore();
   return cv;
 }
+// inclinaison d'un booster (étagère et ouverture) : suit le pointeur, revient au balancement au repos
+function attachPackTilt(host, inner, amp = 14) {
+  if (REDUCED) return;
+  let ev = null, queued = false;
+  const apply = () => { queued = false; if (!ev || host.classList.contains('still')) return; const r = inner.getBoundingClientRect(), x = clamp((ev.clientX - r.left) / r.width, 0, 1), y = clamp((ev.clientY - r.top) / r.height, 0, 1);
+    const st = inner.style; st.setProperty('--pkry', `${(x - .5) * amp * 2}deg`); st.setProperty('--pkrx', `${(.5 - y) * amp * 1.6}deg`); st.setProperty('--pkmx', `${x * 100}%`); st.setProperty('--pkmy', `${y * 100}%`); };
+  host.addEventListener('pointerenter', () => inner.classList.add('hot'));
+  host.addEventListener('pointermove', (e) => { ev = e; if (!queued) { queued = true; requestAnimationFrame(apply); } }, { passive: true });
+  const leave = () => { ev = null; inner.classList.remove('hot'); for (const k of ['--pkrx', '--pkry', '--pkmx', '--pkmy']) inner.style.removeProperty(k); };
+  host.addEventListener('pointerleave', leave); host.addEventListener('pointercancel', leave);
+}
+const FOIL = '<i class="foilfx sheen"></i><i class="foilfx streak"></i><i class="foilfx glare"></i>';
 function renderShelf() {
   const n = ownedCount();
   $('stats').innerHTML = `<div class="stat"><b>${OPENED}</b>booster${OPENED > 1 ? 's' : ''} ouvert${OPENED > 1 ? 's' : ''}</div><div class="stat"><b>${n}</b>/ ${TOTAL} cartes</div>` +
@@ -401,7 +452,8 @@ function renderShelf() {
   for (const b of ['R', 'M', 'S', 'O']) {
     const list = RIVERS.filter(c => c.b === b), got = list.filter(c => owned(c.id)).length;
     const t = document.createElement('button'); t.className = 'pack-tile'; t.setAttribute('aria-label', `Ouvrir un booster du bassin ${BAS_OF[b]}`);
-    t.innerHTML = `<div class="pk"><img alt=""></div><b>${BAS[b]}</b><span>${got} / ${list.length} rivières</span>`; setSrc(t.querySelector('img'), packURL(b, 1));
+    t.innerHTML = `<div class="pk"><div class="pk3d" style="animation-delay:${-'RMSO'.indexOf(b) * 1.7}s">${FOIL}</div></div><b>${BAS[b]}</b><span>${got} / ${list.length} rivières</span>`;
+    const p3 = t.querySelector('.pk3d'); p3.prepend(packCanvas(b)); attachPackTilt(t, p3);
     t.onclick = () => openPack(b); $('shelf').appendChild(t);
   }
 }
@@ -436,7 +488,7 @@ function openPack(b) {
   stage.hidden = false; document.body.style.overflow = 'hidden';
   stage.style.setProperty('--pk', PAL[b][2]); stage.style.setProperty('--pk2', PAL[b][1]);
   $('stageTitle').textContent = `Bassin ${BAS[b]}`;
-  packURL(b, 2).then(u => { $('packBody').style.backgroundImage = $('packFlap').style.backgroundImage = `url(${u})`; });
+  for (const id of ['packBody', 'packFlap']) { const h = $(id); h.querySelector('.pkcv')?.remove(); h.prepend(packCanvas(b)); }
   pack.px = bucket(stageCardW()); pack.ready = Promise.all([backURL(1), ...cards.map(c => frontURL(c, pack.px, 1))]);
   bp.className = 'bigpack'; bp.hidden = false; bp.style.setProperty('--p', 0); $('hand').style.display = '';
   deck.className = 'deck'; deck.innerHTML = ''; $('summary').hidden = true; $('rays').className = 'rays'; $('banner').className = 'banner';
@@ -447,10 +499,11 @@ function openPack(b) {
 }
 const stageCardW = () => Math.min(380, innerWidth * .78, (innerHeight - 300) * 5 / 7);
 function setHint(main, small = '') { $('hint').innerHTML = `${main}${small ? `<small>${small}</small>` : ''}`; }
-function tearTo(p) { if (!pack || pack.done) return; pack.prog = Math.max(pack.prog, clamp(p, 0, 1)); bp.style.setProperty('--p', pack.prog.toFixed(3)); if (pack.prog > .92) finishTear(); }
+function tearTo(p) { if (!pack || pack.done) return; bp.classList.add('still'); pack.prog = Math.max(pack.prog, clamp(p, 0, 1)); bp.style.setProperty('--p', pack.prog.toFixed(3)); if (pack.prog > .92) finishTear(); }
 async function autoTear() { if (!pack || pack.done) return; $('hand').style.display = 'none'; for (let p = pack.prog; p <= 1; p += .025) { tearTo(p); await wait(14); } tearTo(1); }
 const tz = $('tearZone');
-tz.addEventListener('pointerdown', (e) => { if (!pack || pack.done) return; pack.tearing = true; tz.setPointerCapture(e.pointerId); $('hand').style.display = 'none'; pack.x0 = e.clientX; });
+attachPackTilt(bp, $('pk3d'), 10);
+tz.addEventListener('pointerdown', (e) => { if (!pack || pack.done) return; pack.tearing = true; bp.classList.add('still'); tz.setPointerCapture(e.pointerId); $('hand').style.display = 'none'; pack.x0 = e.clientX; });
 tz.addEventListener('pointermove', (e) => { if (!pack?.tearing) return; const r = bp.getBoundingClientRect(); tearTo(Math.abs(e.clientX - pack.x0) / r.width * 1.1); });
 const tearEnd = () => { if (pack) pack.tearing = false; };
 tz.addEventListener('pointerup', tearEnd); tz.addEventListener('pointercancel', tearEnd);
@@ -821,4 +874,4 @@ $('reset').onclick = () => {
 try { await Promise.all(['italic 800 40px "Barlow Condensed"', '700 40px "Barlow Condensed"', '800 40px "Barlow Condensed"', '700 20px "Rubik"', 'italic 400 20px "Rubik"'].map(f => document.fonts.load(f))); } catch (e) {}
 updateCount(); renderShelf();
 idle(() => { for (const c of CARDS) if (owned(c.id)) frontURL(c, bucket(200)); });
-if (/[?&]test/.test(location.search)) window.__tcg = { openPack, autoTear, show, OWN, CARDS, openViewer, toggleFlip, duel, renderDuelSlots, drawPack: rollPack, FX, get pack() { return pack; } };
+if (/[?&]test/.test(location.search)) window.__tcg = { openPack, autoTear, show, OWN, CARDS, openViewer, toggleFlip, duel, renderDuelSlots, drawPack: rollPack, FX, paint: drawPack, get pack() { return pack; } };

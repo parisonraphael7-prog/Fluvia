@@ -74,14 +74,12 @@ h2.vt { font: italic 800 clamp(36px, 4.2vw, 56px)/1 var(--f-display); text-trans
 .stat b { font: 800 26px var(--f-display); color: var(--fg); }
 .shelf { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(16px, 3vw, 44px); align-items: end; }
 .pack-tile { border: 0; background: none; padding: 0; cursor: pointer; display: grid; gap: 10px; justify-items: center; text-align: center; }
-.pack-tile .pk { width: 100%; max-width: 320px; aspect-ratio: 2 / 3; position: relative; transition: transform .35s cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 18px 24px rgba(0,0,0,.5)); }
-.pack-tile .pk::after { content: ""; position: absolute; inset: 0; border-radius: 6px; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.55) 48%, transparent 60%); background-size: 260% 100%; background-position: 130% 0; mix-blend-mode: overlay; }
-.pack-tile:hover .pk { transform: translateY(-10px) rotate(-2deg) scale(1.03); }
-.pack-tile:hover .pk::after { animation: sweep 1.1s ease-out; }
-@keyframes sweep { to { background-position: -40% 0; } }
+.pack-tile .pk { width: 100%; max-width: 320px; aspect-ratio: 2 / 3; position: relative; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.pack-tile .pk::before { content: ""; position: absolute; left: 8%; right: 8%; bottom: -7%; height: 12%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.6), transparent); transition: transform .35s, opacity .35s; }
+.pack-tile:hover .pk::before { transform: scale(.85); opacity: .7; }
+.pack-tile:hover .pk { transform: translateY(-12px) scale(1.04); }
 .pack-tile b { font: italic 800 30px/1 var(--f-display); text-transform: uppercase; }
 .pack-tile span { font-size: 15px; color: var(--fg-3); }
-.pk img { width: 100%; height: 100%; display: block; }
 
 /* ——— ouverture ——— */
 .stage { position: fixed; inset: 0; z-index: 50; background: radial-gradient(ellipse at 50% 42%, color-mix(in oklab, var(--pk, #2a5bff) 38%, #141850), #0b0d24 72%); display: grid; grid-template-rows: auto 1fr auto auto; overflow: hidden; --pk: #2a5bff; --pk2: #19d3ff; }
@@ -114,9 +112,9 @@ h2.vt { font: italic 800 clamp(36px, 4.2vw, 56px)/1 var(--f-display); text-trans
 @keyframes float { 0%, 100% { translate: 0 0; rotate: -1deg; } 50% { translate: 0 -12px; rotate: 1deg; } }
 .bigpack .halo { position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--pk2) 50%, transparent), color-mix(in oklab, var(--pk2) 18%, transparent) 40%, transparent 64%); animation: pulse 3.6s ease-in-out infinite; pointer-events: none; will-change: transform, opacity; }
 @keyframes pulse { 50% { opacity: .6; transform: scale(.94); } }
-.bigpack .body, .bigpack .flap { position: absolute; inset: 0; background-size: 100% 100%; border-radius: 6px; }
-.bigpack .body { clip-path: inset(14% 0 0 0 round 0 0 6px 6px); box-shadow: 0 40px 60px rgba(0,0,0,.55); }
-.bigpack .flap { clip-path: inset(0 0 86% 0 round 6px 6px 0 0); transform-origin: 50% 14%; transform: perspective(700px) rotateX(calc(var(--p, 0) * 38deg)) translateY(calc(var(--p, 0) * -6px)); transition: transform .12s; }
+.bigpack .body, .bigpack .flap { position: absolute; inset: 0; background-size: 100% 100%; }
+.bigpack .body { clip-path: inset(14% 0 0 0); }
+.bigpack .flap { clip-path: inset(0 0 86% 0); transform-origin: 50% 14%; transform: perspective(700px) rotateX(calc(var(--p, 0) * 38deg)) translateY(calc(var(--p, 0) * -6px)); transition: transform .12s; }
 .bigpack .seam { position: absolute; left: 0; right: 0; top: 14%; height: 0; pointer-events: none; }
 .bigpack .seam i { position: absolute; left: 0; top: -3px; height: 6px; width: calc(var(--p, 0) * 100%); border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,.4), #fff); box-shadow: 0 0 12px 3px #fff, 0 0 30px 8px var(--pk2); }
 .bigpack .seam i::after { content: ""; position: absolute; right: -9px; top: -7px; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle, #fff 30%, var(--pk2) 60%, transparent 72%); opacity: calc(var(--p, 0) * 10); }
@@ -290,6 +288,24 @@ footer { padding: 20px var(--gut) 34px; color: var(--fg-3); font-size: 14px; tex
 @keyframes bannerBig { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .fx { display: none; } }
 
+/* ——— boosters en relief : film métallisé, inclinaison 3D, reflets mobiles ——— */
+@property --pkrx { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+@property --pkry { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+@property --pkmx { syntax: '<percentage>'; inherits: true; initial-value: 50%; }
+@property --pkmy { syntax: '<percentage>'; inherits: true; initial-value: 40%; }
+.pk3d { position: absolute; inset: 0; transform: perspective(900px) rotateX(var(--pkrx)) rotateY(var(--pkry)); animation: pksway 7s ease-in-out infinite;
+  transition: --pkrx .6s cubic-bezier(.2,.8,.2,1), --pkry .6s cubic-bezier(.2,.8,.2,1), --pkmx .6s, --pkmy .6s; }
+.pk3d.hot { animation: none; transition-duration: .15s; }
+.pkcv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+@keyframes pksway { 0%, 100% { --pkry: -9deg; --pkrx: 4deg; --pkmx: 22%; --pkmy: 28%; } 50% { --pkry: 9deg; --pkrx: -3deg; --pkmx: 78%; --pkmy: 62%; } }
+.bigpack.still .pk3d, .bigpack.open .pk3d { animation: none; --pkrx: 0deg; --pkry: 0deg; }
+.foilfx { position: absolute; inset: 1.2% 0; pointer-events: none; }
+.foilfx.sheen { background: linear-gradient(115deg, transparent 22%, #ff6ad5 32%, #ffd36a 40%, #6affc6 48%, #6ad1ff 56%, #c06aff 64%, transparent 74%); background-size: 300% 300%; background-position: var(--pkmx) var(--pkmy); mix-blend-mode: color-dodge; opacity: .3; }
+.foilfx.streak { background: linear-gradient(105deg, transparent calc(var(--pkmx) - 22%), rgba(255,255,255,.25) calc(var(--pkmx) - 6%), rgba(255,255,255,.6) var(--pkmx), rgba(255,255,255,.2) calc(var(--pkmx) + 4%), transparent calc(var(--pkmx) + 14%)); mix-blend-mode: soft-light; }
+.foilfx.glare { background: radial-gradient(circle at var(--pkmx) var(--pkmy), rgba(255,255,255,.7), rgba(255,255,255,.12) 28%, transparent 58%); mix-blend-mode: overlay; }
+.bigpack::after { content: ""; position: absolute; left: 6%; right: 6%; bottom: -8%; height: 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.55), transparent); z-index: -1; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .pk3d { animation: none; } }
+
 </style>
 </head>
 <body>
@@ -396,8 +412,10 @@ footer { padding: 20px var(--gut) 34px; color: var(--fg-3); font-size: 14px; tex
     <div class="deck" id="deck"></div>
     <div class="bigpack" id="bigpack">
       <div class="halo" aria-hidden="true"></div>
-      <div class="body" id="packBody"></div>
-      <div class="flap" id="packFlap"></div>
+      <div class="pk3d" id="pk3d">
+        <div class="body" id="packBody"><i class="foilfx sheen"></i><i class="foilfx streak"></i><i class="foilfx glare"></i></div>
+        <div class="flap" id="packFlap"><i class="foilfx sheen"></i><i class="foilfx streak"></i><i class="foilfx glare"></i></div>
+      </div>
       <div class="leak" id="leak" aria-hidden="true"></div>
       <div class="seam" id="seam" aria-hidden="true"><i></i></div>
       <div class="beam" id="beam" aria-hidden="true"></div>
@@ -518,7 +536,7 @@ const bucket = (w) => BUCKETS.find(b => w * DPR <= b) || 900;
 const IMG = new Map(), QUEUE = [];
 let pumping = false;
 const idle = window.requestIdleCallback ? (f) => requestIdleCallback(f, { timeout: 250 }) : (f) => setTimeout(() => f({ timeRemaining: () => 10 }), 16);
-function runJob(j) { if (j.ran) return; j.ran = true; const cv = j.draw(); cv.toBlob(b => j.res(URL.createObjectURL(b)), 'image/jpeg', .9); }
+function runJob(j) { if (j.ran) return; j.ran = true; const cv = j.draw(); cv.toBlob(b => j.res(URL.createObjectURL(b)), j.type || 'image/jpeg', .9); }
 function pump() {
   if (pumping) return; pumping = true;
   // au moins une image par passage : la file avance même si le navigateur n'est jamais « libre » (animations continues)
@@ -526,9 +544,9 @@ function pump() {
   idle(step);
 }
 // prio : 0 = arrière-plan, 1 = bientôt (tête de file), 2 = tout de suite
-function imgURL(key, draw, prio = 0) {
+function imgURL(key, draw, prio = 0, type) {
   let e = IMG.get(key);
-  if (!e) { let res; const p = new Promise(r => res = r); e = { p, job: { draw, res, ran: false } }; IMG.set(key, e); if (prio < 2) { prio ? QUEUE.unshift(e.job) : QUEUE.push(e.job); pump(); } }
+  if (!e) { let res; const p = new Promise(r => res = r); e = { p, job: { draw, res, ran: false, type } }; IMG.set(key, e); if (prio < 2) { prio ? QUEUE.unshift(e.job) : QUEUE.push(e.job); pump(); } }
   if (prio === 2 && !e.job.ran) { const i = QUEUE.indexOf(e.job); if (i >= 0) QUEUE.splice(i, 1); runJob(e.job); }
   else if (prio === 1 && !e.job.ran) { const i = QUEUE.indexOf(e.job); if (i > 0) { QUEUE.splice(i, 1); QUEUE.unshift(e.job); } }
   return e.p;
@@ -536,7 +554,12 @@ function imgURL(key, draw, prio = 0) {
 const frontURL = (c, px, prio = 0) => imgURL(`f${c.id}@${px}`, () => drawFront(c, px), prio);
 const versoURL = (c, px, prio = 0) => imgURL(`v${c.id}@${px}`, () => drawVerso(c, px), prio);
 const backURL = (prio = 0) => imgURL('back', drawBack, prio);
-const packURL = (b, prio = 0) => imgURL(`p${b}`, () => drawPack(b), prio);
+// boosters : toile dessinée une fois par bassin, puis recopiée (pas d'encodage d'image, trop lent avec la transparence)
+const PACKS = new Map();
+function packCanvas(b) {
+  if (!PACKS.has(b)) PACKS.set(b, drawPack(b));
+  const src = PACKS.get(b), cv = document.createElement('canvas'); cv.width = src.width; cv.height = src.height; cv.getContext('2d').drawImage(src, 0, 0); cv.className = 'pkcv'; return cv;
+}
 function setSrc(img, promise) { img.decoding = 'async'; promise.then(u => { img.src = u; }); }
 
 /* =====================================================================
@@ -806,27 +829,73 @@ async function flip(el, toBack) { if (toBack && el._verso) el._verso(); el.class
 /* =====================================================================
    BOOSTERS
    ===================================================================== */
+// booster en emballage métallisé : bords sertis dentelés, volume « coussin », plis près des soudures, grain du film
+const PK_W = 600, PK_H = 900, PK_S = 1.25;
+function packPath(g) {
+  const t = 9, n = 46; g.beginPath(); g.moveTo(0, t);
+  for (let i = 1; i <= n; i++) g.lineTo(i * PK_W / n, i % 2 ? 0 : t);
+  g.lineTo(PK_W, PK_H - t);
+  for (let i = n - 1; i >= 0; i--) g.lineTo(i * PK_W / n, (n - i) % 2 ? PK_H : PK_H - t);
+  g.closePath();
+}
 function drawPack(b) {
-  const W = 600, H = 900, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); const [lt, mid, dp] = PAL[b];
+  const W = PK_W, H = PK_H, cv = document.createElement('canvas'); cv.width = W * PK_S; cv.height = H * PK_S;
+  const g = cv.getContext('2d'); g.scale(PK_S, PK_S); const [lt, mid, dp] = PAL[b], r = rng('pack' + b);
+  const TOP = 120, BOT = H - 60;
+  g.save(); packPath(g); g.clip();
   const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, mid); gr.addColorStop(.6, dp); gr.addColorStop(1, '#0b0d24'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
   g.save(); g.translate(W / 2, 520); g.globalAlpha = .18; g.fillStyle = '#fff';
   for (let k = 0; k < 22; k++) { const a0 = k / 22 * Math.PI * 2; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 900, a0, a0 + .08); g.closePath(); g.fill(); } g.restore();
   const big = RIVERS.filter(c => c.b === b).sort((a, z) => z.rar - a.rar || (z.gauges.power ?? 0) - (a.gauges.power ?? 0))[0];
   if (big) { g.save(); g.beginPath(); g.arc(W / 2, 520, 230, 0, Math.PI * 2); g.clip(); riverArt(g, big, W / 2 - 300, 520 - 228, 600, 456, true); g.restore();
     g.strokeStyle = metal(g, 70, 290, 530, 750, true); g.lineWidth = 9; g.beginPath(); g.arc(W / 2, 520, 230, 0, Math.PI * 2); g.stroke(); }
-  for (const [y0, y1] of [[0, 120], [H - 60, H]]) { g.fillStyle = metal(g, 0, y0, W, y1, false); g.fillRect(0, y0, W, y1 - y0); g.fillStyle = 'rgba(0,0,0,.18)'; for (let x = 0; x < W; x += 12) g.fillRect(x, y0, 5, y1 - y0); }
-  g.setLineDash([10, 8]); g.strokeStyle = 'rgba(11,13,36,.75)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(10, 126); g.lineTo(W - 10, 126); g.stroke(); g.setLineDash([]);
-  g.fillStyle = 'rgba(11,13,36,.75)'; g.font = `800 20px ${FU}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('✂  DÉCHIRER ICI', W / 2, 98);
   const lg = g.createLinearGradient(80, 0, 520, 0); lg.addColorStop(0, '#ffffff'); lg.addColorStop(1, lt);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
   g.save(); g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowOffsetY = 5; g.fillStyle = lg; g.font = `italic 800 108px ${FD}`; g.fillText('FLUVIA', W / 2, 200); g.restore();
   g.fillStyle = '#fff'; g.font = `700 20px ${FU}`; g.fillText('GRAND EST · 2000 – 2026', W / 2, 256);
   g.save(); g.fillStyle = '#0b0d24'; g.beginPath(); g.moveTo(40, 772); g.lineTo(560, 772); g.lineTo(540, 828); g.lineTo(60, 828); g.closePath(); g.fill();
   g.fillStyle = '#fff'; fit(g, `BASSIN ${BAS[b].toUpperCase()}`, 440, 34, 800, FD, 'italic'); g.fillText(`BASSIN ${BAS[b].toUpperCase()}`, W / 2, 801); g.restore();
   g.save(); g.translate(500, 330); g.rotate(.2); g.fillStyle = '#ffcf4a'; g.beginPath(); for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2, rr = k % 2 ? 46 : 56; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill();
   g.fillStyle = '#2a1300'; g.font = `800 30px ${FD}`; g.fillText('5', 0, -10); g.font = `800 16px ${FU}`; g.fillText('CARTES', 0, 16); g.restore();
-  const sh = g.createLinearGradient(0, 0, W, H); sh.addColorStop(.3, 'rgba(255,255,255,0)'); sh.addColorStop(.45, 'rgba(255,255,255,.22)'); sh.addColorStop(.55, 'rgba(255,255,255,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, H);
+  // volume du film : bords qui fuient vers l'arrière, reflets de courbure
+  const side = g.createLinearGradient(0, 0, W, 0);
+  [[0, 'rgba(0,0,0,.55)'], [.05, 'rgba(0,0,0,.2)'], [.1, 'rgba(255,255,255,.12)'], [.16, 'rgba(255,255,255,0)'], [.84, 'rgba(255,255,255,0)'], [.9, 'rgba(255,255,255,.08)'], [.95, 'rgba(0,0,0,.22)'], [1, 'rgba(0,0,0,.6)']].forEach(([o, c]) => side.addColorStop(o, c));
+  g.fillStyle = side; g.fillRect(0, TOP, W, BOT - TOP);
+  const pinch = (y0, dir) => { const v = g.createLinearGradient(0, y0, 0, y0 + dir * 70); v.addColorStop(0, 'rgba(0,0,0,.5)'); v.addColorStop(.25, 'rgba(255,255,255,.1)'); v.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = v; g.fillRect(0, Math.min(y0, y0 + dir * 70), W, 70); };
+  pinch(TOP, 1); pinch(BOT, -1);
+  // plis du plastique, en éventail depuis les soudures
+  const folds = (y0, dir) => { g.save(); g.filter = 'blur(1.5px)'; for (let k = 0; k < 18; k++) { const x = r() * W, len = 18 + r() * 50, wd = 2 + r() * 5, sk = (r() - .5) * 30, lite = k % 2;
+    const fg = g.createLinearGradient(0, y0, 0, y0 + dir * len); fg.addColorStop(0, lite ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.26)'); fg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = fg;
+    g.beginPath(); g.moveTo(x - wd, y0); g.quadraticCurveTo(x + sk * .3, y0 + dir * len * .5, x + sk, y0 + dir * len); g.quadraticCurveTo(x + sk * .3 + wd * .4, y0 + dir * len * .5, x + wd, y0); g.closePath(); g.fill(); } g.restore(); };
+  folds(TOP, 1); folds(BOT, -1);
+  // soudures serties : métal strié, ombre et reflet de bord
+  for (const [y0, y1] of [[0, TOP], [BOT, H]]) {
+    g.fillStyle = metal(g, 0, y0, W, y1, false); g.fillRect(0, y0, W, y1 - y0);
+    for (let x = 0; x < W; x += 8) { const sg = g.createLinearGradient(x, 0, x + 8, 0); sg.addColorStop(0, 'rgba(255,255,255,.35)'); sg.addColorStop(.5, 'rgba(0,0,0,.05)'); sg.addColorStop(1, 'rgba(0,0,0,.28)'); g.fillStyle = sg; g.fillRect(x, y0, 8, y1 - y0); }
+    const e = g.createLinearGradient(0, y0, 0, y1); e.addColorStop(0, 'rgba(0,0,0,.28)'); e.addColorStop(.2, 'rgba(255,255,255,.12)'); e.addColorStop(.8, 'rgba(255,255,255,0)'); e.addColorStop(1, 'rgba(0,0,0,.35)'); g.fillStyle = e; g.fillRect(0, y0, W, y1 - y0);
+  }
+  g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(0, TOP - 2, W, 2); g.fillRect(0, BOT, W, 2);
+  g.setLineDash([10, 8]); g.strokeStyle = 'rgba(11,13,36,.75)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(10, 126); g.lineTo(W - 10, 126); g.stroke(); g.setLineDash([]);
+  g.fillStyle = 'rgba(11,13,36,.8)'; g.font = `800 20px ${FU}`; g.fillText('✂  DÉCHIRER ICI', W / 2, 92);
+  // grain métallisé du film
+  for (let k = 0; k < 5000; k++) { g.fillStyle = k % 2 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.08)'; g.fillRect(r() * W, r() * H, 1.4, 1.4); }
+  g.globalAlpha = .05; g.strokeStyle = '#fff'; g.lineWidth = 1; for (let k = -H; k < W; k += 7) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + H * .35, H); g.stroke(); } g.globalAlpha = 1;
+  const sh = g.createLinearGradient(0, 0, W, H); sh.addColorStop(.3, 'rgba(255,255,255,0)'); sh.addColorStop(.45, 'rgba(255,255,255,.18)'); sh.addColorStop(.55, 'rgba(255,255,255,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, H);
+  g.restore();
   return cv;
 }
+// inclinaison d'un booster (étagère et ouverture) : suit le pointeur, revient au balancement au repos
+function attachPackTilt(host, inner, amp = 14) {
+  if (REDUCED) return;
+  let ev = null, queued = false;
+  const apply = () => { queued = false; if (!ev || host.classList.contains('still')) return; const r = inner.getBoundingClientRect(), x = clamp((ev.clientX - r.left) / r.width, 0, 1), y = clamp((ev.clientY - r.top) / r.height, 0, 1);
+    const st = inner.style; st.setProperty('--pkry', `${(x - .5) * amp * 2}deg`); st.setProperty('--pkrx', `${(.5 - y) * amp * 1.6}deg`); st.setProperty('--pkmx', `${x * 100}%`); st.setProperty('--pkmy', `${y * 100}%`); };
+  host.addEventListener('pointerenter', () => inner.classList.add('hot'));
+  host.addEventListener('pointermove', (e) => { ev = e; if (!queued) { queued = true; requestAnimationFrame(apply); } }, { passive: true });
+  const leave = () => { ev = null; inner.classList.remove('hot'); for (const k of ['--pkrx', '--pkry', '--pkmx', '--pkmy']) inner.style.removeProperty(k); };
+  host.addEventListener('pointerleave', leave); host.addEventListener('pointercancel', leave);
+}
+const FOIL = '<i class="foilfx sheen"></i><i class="foilfx streak"></i><i class="foilfx glare"></i>';
 function renderShelf() {
   const n = ownedCount();
   $('stats').innerHTML = `<div class="stat"><b>${OPENED}</b>booster${OPENED > 1 ? 's' : ''} ouvert${OPENED > 1 ? 's' : ''}</div><div class="stat"><b>${n}</b>/ ${TOTAL} cartes</div>` +
@@ -835,7 +904,8 @@ function renderShelf() {
   for (const b of ['R', 'M', 'S', 'O']) {
     const list = RIVERS.filter(c => c.b === b), got = list.filter(c => owned(c.id)).length;
     const t = document.createElement('button'); t.className = 'pack-tile'; t.setAttribute('aria-label', `Ouvrir un booster du bassin ${BAS_OF[b]}`);
-    t.innerHTML = `<div class="pk"><img alt=""></div><b>${BAS[b]}</b><span>${got} / ${list.length} rivières</span>`; setSrc(t.querySelector('img'), packURL(b, 1));
+    t.innerHTML = `<div class="pk"><div class="pk3d" style="animation-delay:${-'RMSO'.indexOf(b) * 1.7}s">${FOIL}</div></div><b>${BAS[b]}</b><span>${got} / ${list.length} rivières</span>`;
+    const p3 = t.querySelector('.pk3d'); p3.prepend(packCanvas(b)); attachPackTilt(t, p3);
     t.onclick = () => openPack(b); $('shelf').appendChild(t);
   }
 }
@@ -870,7 +940,7 @@ function openPack(b) {
   stage.hidden = false; document.body.style.overflow = 'hidden';
   stage.style.setProperty('--pk', PAL[b][2]); stage.style.setProperty('--pk2', PAL[b][1]);
   $('stageTitle').textContent = `Bassin ${BAS[b]}`;
-  packURL(b, 2).then(u => { $('packBody').style.backgroundImage = $('packFlap').style.backgroundImage = `url(${u})`; });
+  for (const id of ['packBody', 'packFlap']) { const h = $(id); h.querySelector('.pkcv')?.remove(); h.prepend(packCanvas(b)); }
   pack.px = bucket(stageCardW()); pack.ready = Promise.all([backURL(1), ...cards.map(c => frontURL(c, pack.px, 1))]);
   bp.className = 'bigpack'; bp.hidden = false; bp.style.setProperty('--p', 0); $('hand').style.display = '';
   deck.className = 'deck'; deck.innerHTML = ''; $('summary').hidden = true; $('rays').className = 'rays'; $('banner').className = 'banner';
@@ -881,10 +951,11 @@ function openPack(b) {
 }
 const stageCardW = () => Math.min(380, innerWidth * .78, (innerHeight - 300) * 5 / 7);
 function setHint(main, small = '') { $('hint').innerHTML = `${main}${small ? `<small>${small}</small>` : ''}`; }
-function tearTo(p) { if (!pack || pack.done) return; pack.prog = Math.max(pack.prog, clamp(p, 0, 1)); bp.style.setProperty('--p', pack.prog.toFixed(3)); if (pack.prog > .92) finishTear(); }
+function tearTo(p) { if (!pack || pack.done) return; bp.classList.add('still'); pack.prog = Math.max(pack.prog, clamp(p, 0, 1)); bp.style.setProperty('--p', pack.prog.toFixed(3)); if (pack.prog > .92) finishTear(); }
 async function autoTear() { if (!pack || pack.done) return; $('hand').style.display = 'none'; for (let p = pack.prog; p <= 1; p += .025) { tearTo(p); await wait(14); } tearTo(1); }
 const tz = $('tearZone');
-tz.addEventListener('pointerdown', (e) => { if (!pack || pack.done) return; pack.tearing = true; tz.setPointerCapture(e.pointerId); $('hand').style.display = 'none'; pack.x0 = e.clientX; });
+attachPackTilt(bp, $('pk3d'), 10);
+tz.addEventListener('pointerdown', (e) => { if (!pack || pack.done) return; pack.tearing = true; bp.classList.add('still'); tz.setPointerCapture(e.pointerId); $('hand').style.display = 'none'; pack.x0 = e.clientX; });
 tz.addEventListener('pointermove', (e) => { if (!pack?.tearing) return; const r = bp.getBoundingClientRect(); tearTo(Math.abs(e.clientX - pack.x0) / r.width * 1.1); });
 const tearEnd = () => { if (pack) pack.tearing = false; };
 tz.addEventListener('pointerup', tearEnd); tz.addEventListener('pointercancel', tearEnd);
@@ -1255,7 +1326,7 @@ $('reset').onclick = () => {
 try { await Promise.all(['italic 800 40px "Barlow Condensed"', '700 40px "Barlow Condensed"', '800 40px "Barlow Condensed"', '700 20px "Rubik"', 'italic 400 20px "Rubik"'].map(f => document.fonts.load(f))); } catch (e) {}
 updateCount(); renderShelf();
 idle(() => { for (const c of CARDS) if (owned(c.id)) frontURL(c, bucket(200)); });
-if (/[?&]test/.test(location.search)) window.__tcg = { openPack, autoTear, show, OWN, CARDS, openViewer, toggleFlip, duel, renderDuelSlots, drawPack: rollPack, FX, get pack() { return pack; } };
+if (/[?&]test/.test(location.search)) window.__tcg = { openPack, autoTear, show, OWN, CARDS, openViewer, toggleFlip, duel, renderDuelSlots, drawPack: rollPack, FX, paint: drawPack, get pack() { return pack; } };
 
 </script>
 </body>
