@@ -2,7 +2,7 @@
 
 **Les rivières du Grand Est en cartes à collectionner.** Ouvrez des boosters, collectionnez 122 rivières et 6 phénomènes, retournez les cartes, affrontez-vous en duel.
 
-▶ **Jouer : https://parisonraphael7-prog.github.io/fluvia/**
+▶ **Jouer : https://parisonraphael7-prog.github.io/Fluvia/**
 
 ![Aperçu](apercu.png)
 
